@@ -25,6 +25,8 @@ namespace Dmitryd\DdDeepl\Hook;
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
+use TYPO3\CMS\Backend\Module\Module;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use Dmitryd\DdDeepl\Service\DeeplTranslationService;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -43,7 +45,7 @@ class InjectAdditionalResources
      * Injects the module with a DeepL button.
      *
      * @param array $params
-     * @param \TYPO3\CMS\Core\Page\PageRenderer $pageRenderer
+     * @param PageRenderer $pageRenderer
      */
     public function inject(array $params, PageRenderer $pageRenderer): void
     {
@@ -52,7 +54,7 @@ class InjectAdditionalResources
         if (ApplicationType::fromRequest($request)->isBackend()) {
             $pageTSConfig = BackendUtility::getPagesTSconfig($this->getPageId());
             $module = $request->getAttribute('module');
-            /** @var \TYPO3\CMS\Backend\Module\Module $module */
+            /** @var Module $module */
             if ($module) {
                 $moduleIdentifier = $module->getIdentifier();
                 // Only within web_* and with the navigation component because we need the page id!
@@ -88,7 +90,7 @@ class InjectAdditionalResources
         $queryParams = $request->getQueryParams() ?? [];
         if (!($pageId = ($queryParams['id'] ?? 0))) {
             $site = $request->getAttribute('site');
-            /** @var \TYPO3\CMS\Core\Site\Entity\Site $site */
+            /** @var Site $site */
             $pageId = $site->getRootPageId();
         }
 

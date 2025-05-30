@@ -1,7 +1,7 @@
 <?php
 
 if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('news')) {
-    call_user_func(function () {
+    call_user_func(function (): void {
         $fields = [
             'location_simple',
             'organizer_simple',

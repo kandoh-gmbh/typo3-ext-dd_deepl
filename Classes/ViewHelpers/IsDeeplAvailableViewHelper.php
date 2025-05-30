@@ -36,7 +36,8 @@ use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
  */
 class IsDeeplAvailableViewHelper extends AbstractViewHelper
 {
-    public function render()
+    #[\Override]
+    public function render(): int
     {
         return (int)GeneralUtility::makeInstance(DeeplTranslationService::class)->isAvailable();
     }

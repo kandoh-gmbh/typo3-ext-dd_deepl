@@ -69,7 +69,7 @@ final class AfterRecordTranslatedEvent
     /**
      * Fetches the target language.
      *
-     * @return \TYPO3\CMS\Core\Site\Entity\SiteLanguage
+     * @return SiteLanguage
      */
     public function getTargetLanguage(): SiteLanguage
     {

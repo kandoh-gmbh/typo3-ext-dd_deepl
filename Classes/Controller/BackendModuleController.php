@@ -25,6 +25,9 @@ namespace Dmitryd\DdDeepl\Controller;
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
+use TYPO3\CMS\Core\Imaging\IconSize;
+use TYPO3\CMS\Core\Exception;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use DeepL\DeepLException;
 use DeepL\GlossaryInfo;
 use Dmitryd\DdDeepl\Configuration\Configuration;
@@ -36,7 +39,6 @@ use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Http\Response;
-use TYPO3\CMS\Core\Imaging\Icon;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
@@ -73,8 +75,8 @@ class BackendModuleController extends ActionController
      * Downloads the glossary.
      *
      * @param string $glossaryId
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \DeepL\DeepLException
+     * @return ResponseInterface
+     * @throws DeepLException
      */
     public function downloadGlossaryAction(string $glossaryId): ResponseInterface
     {
@@ -118,8 +120,8 @@ class BackendModuleController extends ActionController
      * Deletes the glossary.
      *
      * @param string $glossaryId
-     * @throws \DeepL\DeepLException
-     * @throws \TYPO3\CMS\Core\Exception
+     * @throws DeepLException
+     * @throws Exception
      * @return ResponseInterface
      */
     public function deleteGlossaryAction(string $glossaryId): ResponseInterface
@@ -150,8 +152,8 @@ class BackendModuleController extends ActionController
      * Manages glossaries.
      *
      * @param string $glossaryId
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \DeepL\DeepLException
+     * @return ResponseInterface
+     * @throws DeepLException
      */
     public function glossaryAction(string $glossaryId = ''): ResponseInterface
     {
@@ -166,7 +168,7 @@ class BackendModuleController extends ActionController
     /**
      * Shows the prompt to select a page id.
      *
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      */
     public function noPageIdAction(): ResponseInterface
     {
@@ -176,8 +178,8 @@ class BackendModuleController extends ActionController
     /**
      * Shows the overview.
      *
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \DeepL\DeepLException
+     * @return ResponseInterface
+     * @throws DeepLException
      */
     public function overviewAction(): ResponseInterface
     {
@@ -210,11 +212,11 @@ class BackendModuleController extends ActionController
         try {
             $site = GeneralUtility::makeInstance(SiteFinder::class)->getSiteByPageId($this->pageUid);
         } catch (SiteNotFoundException) {
-            $this->redirect('noPageId');
+            return $this->redirect('noPageId');
         }
         $languages = [];
         foreach ($site->getAllLanguages() as $siteLanguage) {
-            /** @var \TYPO3\CMS\Core\Site\Entity\SiteLanguage $siteLanguage */
+            /** @var SiteLanguage $siteLanguage */
             $languages[$siteLanguage->getLocale()->getLanguageCode()] = $siteLanguage->getTitle();
         }
         $this->moduleTemplate->assignMultiple([
@@ -317,8 +319,8 @@ class BackendModuleController extends ActionController
      * Displays the information about a glossary.
      *
      * @param string $glossaryId
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws \DeepL\DeepLException
+     * @return ResponseInterface
+     * @throws DeepLException
      */
     public function viewGlossaryAction(string $glossaryId): ResponseInterface
     {
@@ -404,7 +406,7 @@ class BackendModuleController extends ActionController
                     'placement' => 'bottom',
                     'title' => $title])
                 ->setTitle($title)
-                ->setIcon($iconFactory->getIcon($configuration['icon'], Icon::SIZE_SMALL));
+                ->setIcon($iconFactory->getIcon($configuration['icon'], IconSize::SMALL));
             $buttonBar->addButton($button, ButtonBar::BUTTON_POSITION_LEFT, 1);
         }
 
@@ -486,14 +488,16 @@ class BackendModuleController extends ActionController
             return false;
         }
 
-        $glossaries = array_filter($glossaries, function (GlossaryInfo $glossaryInfo) use ($sourceLanguage, $targetLanguage): bool {
-            return $glossaryInfo->sourceLang === $sourceLanguage && $glossaryInfo->targetLang === $targetLanguage;
-        });
+        $glossaries = array_filter(
+            $glossaries,
+            fn(GlossaryInfo $glossaryInfo): bool => $glossaryInfo->sourceLang === $sourceLanguage && $glossaryInfo->targetLang === $targetLanguage
+        );
 
         return count($glossaries) >= (int)$this->settings['maximumNumberOfGlossariesPerLanguage'];
     }
 
     /** @inheritDoc */
+    #[\Override]
     protected function resolveActionMethodName(): string
     {
         return $this->pageUid === 0 ? 'noPageIdAction' : parent::resolveActionMethodName();

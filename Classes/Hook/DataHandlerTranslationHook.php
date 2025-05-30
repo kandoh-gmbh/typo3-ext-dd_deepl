@@ -25,6 +25,7 @@ namespace Dmitryd\DdDeepl\Hook;
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
+use TYPO3\CMS\Core\Http\ServerRequest;
 use Dmitryd\DdDeepl\Service\DeeplTranslationService;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -56,7 +57,7 @@ class DataHandlerTranslationHook
     /**
      * Creates the instance of the class.
      *
-     * @param \Psr\Log\LoggerInterface $logger
+     * @param LoggerInterface $logger
      */
     public function __construct(protected LoggerInterface $logger)
     {
@@ -69,7 +70,7 @@ class DataHandlerTranslationHook
      * @param string $tableName
      * @param $recordId
      * @param array $fieldArray
-     * @param \TYPO3\CMS\Core\DataHandling\DataHandler $dataHandler
+     * @param DataHandler $dataHandler
      */
     public function processDatamap_postProcessFieldArray(string $status, string $tableName, $recordId, array &$fieldArray, DataHandler $dataHandler): void
     {
@@ -137,7 +138,7 @@ class DataHandlerTranslationHook
     protected function isDeeplRequest(): bool
     {
         $request = $GLOBALS['TYPO3_REQUEST'];
-        /** @var \TYPO3\CMS\Core\Http\ServerRequest $request */
+        /** @var ServerRequest $request */
         $queryParams = $request->getQueryParams() ?? [];
         $parsedBody = $request->getParsedBody() ?? [];
 

@@ -74,10 +74,10 @@ class DeeplTranslationService implements SingletonInterface
 
     protected EventDispatcher $eventDispatcher;
 
-    /** @var \DeepL\Language[] */
+    /** @var Language[] */
     protected array $sourceLanguages = [];
 
-    /** @var \DeepL\Language[] */
+    /** @var Language[] */
     protected array $targetLanguages = [];
 
     protected ?Translator $translator = null;
@@ -86,14 +86,14 @@ class DeeplTranslationService implements SingletonInterface
      * Creates the instance of the class.
      *
      * @param array $deeplOptions
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     public function __construct(array $deeplOptions = [])
     {
         $this->configuration = GeneralUtility::makeInstance(Configuration::class);
         $this->eventDispatcher = GeneralUtility::makeInstance(EventDispatcher::class);
 
-        $this->setLogger(GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__));
+        $this->setLogger(GeneralUtility::makeInstance(LogManager::class)->getLogger(self::class));
 
         if (Environment::isComposerMode()) {
             $deeplOptions = array_merge(
@@ -154,7 +154,7 @@ class DeeplTranslationService implements SingletonInterface
                 $this->logger->error(
                     sprintf(
                         'Exception %s while fetching DeepL languages. Code %d, message "%s". Stack: %s',
-                        get_class($exception),
+                        $exception::class,
                         $exception->getCode(),
                         $exception->getMessage(),
                         $exception->getTraceAsString()
@@ -211,10 +211,10 @@ class DeeplTranslationService implements SingletonInterface
      * You can call this method only if "isAvailable()" returns true.
      *
      * @param string $glossaryId
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      * @internal
      */
-    public function deleteGlossary(string $glossaryId)
+    public function deleteGlossary(string $glossaryId): void
     {
         $this->translator->deleteGlossary($glossaryId);
     }
@@ -269,7 +269,7 @@ class DeeplTranslationService implements SingletonInterface
      * You can call this method only if "isAvailable()" returns true.
      *
      * @return Usage
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     public function getUsage(): Usage
     {
@@ -295,7 +295,7 @@ class DeeplTranslationService implements SingletonInterface
                     $this->logger->error(
                         sprintf(
                             'DeepL is not available. Class: %s, code %d, message "%s". Stack: %s',
-                            get_class($exception),
+                            $exception::class,
                             $exception->getCode(),
                             $exception->getMessage(),
                             $exception->getTraceAsString()
@@ -330,10 +330,10 @@ class DeeplTranslationService implements SingletonInterface
      *
      * @param string $tableName
      * @param array $record
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $targetLanguage
      * @param array $exceptFieldNames
      * @return array
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     public function translateRecord(string $tableName, array $record, SiteLanguage $targetLanguage, array $exceptFieldNames = []): array
     {
@@ -412,15 +412,15 @@ class DeeplTranslationService implements SingletonInterface
      * @param string $tableName
      * @param string $fieldName
      * @param string $fieldValue
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return string
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     public function translateField(string $tableName, string $fieldName, string $fieldValue, SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): string
     {
         if ($this->canTranslate($sourceLanguage, $targetLanguage)) {
-            $fieldValue = $this->translateFieldInternal(
+            return $this->translateFieldInternal(
                 $tableName,
                 $fieldName,
                 $fieldValue,
@@ -442,7 +442,7 @@ class DeeplTranslationService implements SingletonInterface
      * @param string $sourceLanguage
      * @param string $targetLanguage
      * @return string
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      * @todo Possibly before/after events here too?
      */
     public function translateText(string $text, string $sourceLanguage, string $targetLanguage): string
@@ -551,8 +551,8 @@ class DeeplTranslationService implements SingletonInterface
     /**
      * Checks if translation is supported for these languages.
      *
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return bool
      */
     protected function canTranslate(SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): bool
@@ -609,7 +609,7 @@ class DeeplTranslationService implements SingletonInterface
                 $this->logger->debug(
                     sprintf(
                         'Exception %s, code %d, message: "%s" while fetching datas tructure for %s.%s',
-                        get_class($exception),
+                        $exception::class,
                         $exception->getCode(),
                         $exception->getMessage(),
                         $tableName,
@@ -651,7 +651,7 @@ class DeeplTranslationService implements SingletonInterface
                 if (is_array($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy']['no'])) {
                     $apiHost = parse_url($this->configuration->getApiUrl(), PHP_URL_HOST);
                     foreach ($GLOBALS['TYPO3_CONF_VARS']['HTTP']['proxy']['no'] as $entry) {
-                        if (str_ends_with($apiHost, $entry)) {
+                        if (str_ends_with($apiHost, (string) $entry)) {
                             $result = '';
                             break;
                         }
@@ -690,9 +690,9 @@ class DeeplTranslationService implements SingletonInterface
                     }
                     $site = GeneralUtility::makeInstance(SiteFinder::class)->getSiteByPageId($pageId);
                     $result = $site->getLanguageById($record[$languageFieldName]);
-                } catch (SiteNotFoundException $exception) {
+                } catch (SiteNotFoundException) {
                     // Nothing to do, record is outside of sites
-                } catch (\InvalidArgumentException $exception) {
+                } catch (\InvalidArgumentException) {
                     // Nothing to do - language does not exist on the site but the record has it
                 }
             }
@@ -739,7 +739,7 @@ class DeeplTranslationService implements SingletonInterface
     /**
      * Checks if the language is supported by DeepL.
      *
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $siteLanguage
+     * @param SiteLanguage $siteLanguage
      * @param bool $isTarget
      * @return bool
      */
@@ -783,10 +783,10 @@ class DeeplTranslationService implements SingletonInterface
      * @param string $tableName
      * @param string $fieldName
      * @param string $fieldValue
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return string
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     protected function translateFieldInternal(string $tableName, string $fieldName, string $fieldValue, array $tcaConfig, SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): string
     {
@@ -818,10 +818,10 @@ class DeeplTranslationService implements SingletonInterface
      * @param string $sheetName
      * @param array $fields
      * @param array $ds
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return array
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     protected function translateFlexformSheetFields(string $tableName, string $fieldName, string $sheetName, array $fields, array $ds, SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): array
     {
@@ -856,10 +856,10 @@ class DeeplTranslationService implements SingletonInterface
      * @param string $fieldName
      * @param string $fieldValue
      * @param array $ds
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return string
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     protected function translateFlexformField(string $tableName, string $fieldName, string $fieldValue, array $ds, SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): string
     {
@@ -879,7 +879,7 @@ class DeeplTranslationService implements SingletonInterface
 
         $tools = GeneralUtility::makeInstance(FlexFormTools::class);
         /** @var FlexFormTools $tools */
-        $fieldValue = $tools->flexArray2Xml($fields, true);
+        $fieldValue = $tools->flexArray2Xml($fields);
 
         return $fieldValue;
     }
@@ -892,10 +892,10 @@ class DeeplTranslationService implements SingletonInterface
      * @param array $ds
      * @param array $config
      * @param array $section
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $sourceLanguage
-     * @param \TYPO3\CMS\Core\Site\Entity\SiteLanguage $targetLanguage
+     * @param SiteLanguage $sourceLanguage
+     * @param SiteLanguage $targetLanguage
      * @return array
-     * @throws \DeepL\DeepLException
+     * @throws DeepLException
      */
     protected function translateFlexformSection(string $tableName, string $currentFlexformFieldName, array $ds, array $config, array &$section, SiteLanguage $sourceLanguage, SiteLanguage $targetLanguage): array
     {
